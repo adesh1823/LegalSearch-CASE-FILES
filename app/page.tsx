@@ -615,15 +615,9 @@ export default function IndianLegalSearchApp() {
               )}
             </Card>
 
-            <Tabs defaultValue="indian_kanoon" className="w-full">
+            <Tabs defaultValue="supreme_court" className="w-full">
               <TabsList className="grid w-full grid-cols-4 bg-gradient-to-r from-primary/10 to-secondary/10 p-2 rounded-xl shadow-lg h-16">
-                <TabsTrigger
-                  value="indian_kanoon"
-                  className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-white h-12 rounded-lg font-semibold indian-hover"
-                >
-                  <Scale className="h-5 w-5" />
-                  <span className="sanskrit-style">⚖️ Indian Kanoon</span>
-                </TabsTrigger>
+                
                 <TabsTrigger
                   value="supreme_court"
                   className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-secondary data-[state=active]:to-secondary/80 data-[state=active]:text-white h-12 rounded-lg font-semibold indian-hover"
@@ -637,6 +631,13 @@ export default function IndianLegalSearchApp() {
                 >
                   <Building className="h-5 w-5" />
                   <span className="sanskrit-style">🏛️ eCourts</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="indian_kanoon"
+                  className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-white h-12 rounded-lg font-semibold indian-hover"
+                >
+                  <Scale className="h-5 w-5" />
+                  <span className="sanskrit-style">⚖️ Indian Kanoon</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="legal_news"
