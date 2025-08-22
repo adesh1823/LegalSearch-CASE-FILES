@@ -70,7 +70,7 @@ export default function IndianLegalSearchApp() {
     year: "",
   })
 
-  const API_BASE_URL = "https://aravsaxena884-legal-search.hf.space" 
+  const API_BASE_URL = "https://aravsaxena884-legal-search.hf.space" // Update this to your API URL
 
   const handleSearch = async () => {
     if (!query.trim()) return
@@ -150,15 +150,38 @@ export default function IndianLegalSearchApp() {
 
   const handleDocumentPreview = async (docId: string, title: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/document/${docId}`)
+      // Extract document ID from Indian Kanoon links if needed
+      let actualDocId = docId
+      if (docId.includes("/doc/")) {
+        const matches = docId.match(/\/doc\/(\d+)/)
+        actualDocId = matches ? matches[1] : docId
+      }
+
+      const response = await fetch(`${API_BASE_URL}/document/${actualDocId}`)
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
       const data = await response.json()
-      setDocumentPreview({ title, content: data.content || "Document content not available." })
+
+      // Handle different response formats from the API
+      let content = "Document content not available."
+      if (data.content) {
+        content = data.content
+      } else if (data.doc_content) {
+        content = data.doc_content
+      } else if (data.text) {
+        content = data.text
+      } else if (typeof data === "string") {
+        content = data
+      }
+
+      setDocumentPreview({ title, content })
     } catch (error) {
       console.error("Document preview failed:", error)
-      setDocumentPreview({ title, content: "Failed to load document preview. Please try again later." })
+      setDocumentPreview({
+        title,
+        content: `Failed to load document preview: ${error instanceof Error ? error.message : "Unknown error"}. This document may not be available for preview.`,
+      })
     }
   }
 
@@ -210,17 +233,23 @@ export default function IndianLegalSearchApp() {
                   ) : (
                     <div className="flex items-center gap-2">
                       <span className="text-muted-foreground">{result.title}</span>
-                      <Badge variant="outline" className="text-xs">
-                        📄 Document Preview
-                      </Badge>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs bg-gradient-to-r from-primary/10 to-secondary/10 hover:from-primary/20 hover:to-secondary/20 border-primary/30"
-                        onClick={() => handleDocumentPreview(result.link || `doc_${index}`, result.title)}
-                      >
-                        👁️ Preview Document
-                      </Button>
+                      {source === "indian_kanoon" &&
+                        result.link &&
+                        (result.link.includes("/doc/") || result.link.match(/\d+/)) && (
+                          <>
+                            <Badge variant="outline" className="text-xs">
+                              📄 Document Available
+                            </Badge>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-xs bg-gradient-to-r from-primary/10 to-secondary/10 hover:from-primary/20 hover:to-secondary/20 border-primary/30"
+                              onClick={() => handleDocumentPreview(result.link || `doc_${index}`, result.title)}
+                            >
+                              👁️ Preview Document
+                            </Button>
+                          </>
+                        )}
                     </div>
                   )}
                 </CardTitle>
@@ -391,7 +420,7 @@ export default function IndianLegalSearchApp() {
               <Scale className="h-10 w-10 text-white" />
               <Crown className="h-8 w-8 text-white/80" />
             </div>
-            <div>
+            <div className="flex-1">
               <h1 className="text-4xl font-bold mb-3 text-white drop-shadow-2xl sanskrit-style devanagari-accent">
                 भारतीय न्यायिक अनुसंधान पोर्टल
               </h1>
@@ -404,6 +433,17 @@ export default function IndianLegalSearchApp() {
               <p className="text-white/90 text-xl flex items-center gap-2">
                 <span className="text-2xl">🇮🇳</span>
                 <span className="sanskrit-style">न्याय सेवा • Legal Excellence • सत्यमेव जयते</span>
+              </p>
+            </div>
+            <div className="flex flex-col gap-3">
+              <a href="/chatbot" className="block">
+                <Button className="bg-gradient-to-r from-orange-500 to-green-600 hover:from-orange-600 hover:to-green-700 text-white shadow-2xl px-6 py-4 h-auto text-lg font-bold indian-hover pulse-saffron">
+                  <Brain className="h-6 w-6 mr-3" />
+                  <span className="sanskrit-style">🤖 AI Chatbot Analysis • चैटबॉट विश्लेषण</span>
+                </Button>
+              </a>
+              <p className="text-white/80 text-sm text-center max-w-48">
+                Upload documents & get AI-powered legal insights
               </p>
             </div>
           </div>
@@ -575,9 +615,15 @@ export default function IndianLegalSearchApp() {
               )}
             </Card>
 
-            <Tabs defaultValue="supreme_court" className="w-full">
+            <Tabs defaultValue="indian_kanoon" className="w-full">
               <TabsList className="grid w-full grid-cols-4 bg-gradient-to-r from-primary/10 to-secondary/10 p-2 rounded-xl shadow-lg h-16">
-                
+                <TabsTrigger
+                  value="indian_kanoon"
+                  className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-white h-12 rounded-lg font-semibold indian-hover"
+                >
+                  <Scale className="h-5 w-5" />
+                  <span className="sanskrit-style">⚖️ Indian Kanoon</span>
+                </TabsTrigger>
                 <TabsTrigger
                   value="supreme_court"
                   className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-secondary data-[state=active]:to-secondary/80 data-[state=active]:text-white h-12 rounded-lg font-semibold indian-hover"
@@ -598,13 +644,6 @@ export default function IndianLegalSearchApp() {
                 >
                   <FileText className="h-5 w-5" />
                   <span className="sanskrit-style">📰 Legal News</span>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="indian_kanoon"
-                  className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-white h-12 rounded-lg font-semibold indian-hover"
-                >
-                  <Scale className="h-5 w-5" />
-                  <span className="sanskrit-style">⚖️ Indian Kanoon</span>
                 </TabsTrigger>
               </TabsList>
 
@@ -648,7 +687,7 @@ export default function IndianLegalSearchApp() {
                   <CardHeader className="bg-gradient-to-r from-accent/10 to-accent/5 mandala-pattern">
                     <CardTitle className="text-accent text-xl sanskrit-style flex items-center gap-2">
                       <Building className="h-6 w-6" />
-                      🏛️ eCourts Platform • ई-कोर्ट प्लेटफॉर्म
+                      🏛️ eCourts Platform • ई-कोर्ट प्लेटफॉरम
                     </CardTitle>
                     <CardDescription className="text-lg">
                       🏢 High Courts and District Courts across India •
