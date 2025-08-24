@@ -70,7 +70,7 @@ export default function IndianLegalSearchApp() {
     year: "",
   })
 
-  const API_BASE_URL = "https://aravsaxena884-legal-search.hf.space" // Update this to your API URL
+  const API_BASE_URL = "http://localhost:5000" // Update this to your API URL
 
   const handleSearch = async () => {
     if (!query.trim()) return
@@ -383,7 +383,7 @@ export default function IndianLegalSearchApp() {
             </div>
             <div className="p-6 max-h-96 overflow-auto">
               <div className="prose prose-lg max-w-none">
-                <pre className="whitespace-pre-wrap text-sm leading-relaxed text-foreground bg-muted/30 p-4 rounded-lg border border-primary/20">
+                <pre className="whitespace-pre-wrap text-sm leading-relaxed text-foreground bg-muted/30 p-4 rounded-lg border border-primary/20 sanskrit-style">
                   {documentPreview.content}
                 </pre>
               </div>
@@ -440,6 +440,19 @@ export default function IndianLegalSearchApp() {
                 <Button className="bg-gradient-to-r from-orange-500 to-green-600 hover:from-orange-600 hover:to-green-700 text-white shadow-2xl px-6 py-4 h-auto text-lg font-bold indian-hover pulse-saffron">
                   <Brain className="h-6 w-6 mr-3" />
                   <span className="sanskrit-style">🤖 AI Chatbot Analysis • चैटबॉट विश्लेषण</span>
+                </Button>
+              </a>
+              <a href="/voicebot" className="block">
+                <Button className="bg-gradient-to-r from-green-500 to-orange-600 hover:from-green-600 hover:to-orange-700 text-white shadow-2xl px-6 py-4 h-auto text-lg font-bold indian-hover pulse-saffron">
+                  <svg className="h-6 w-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                    />
+                  </svg>
+                  <span className="sanskrit-style">🗣️ Voice Assistant • आवाज सहायक</span>
                 </Button>
               </a>
               <p className="text-white/80 text-sm text-center max-w-48">
@@ -615,9 +628,15 @@ export default function IndianLegalSearchApp() {
               )}
             </Card>
 
-            <Tabs defaultValue="supreme_court" className="w-full">
+            <Tabs defaultValue="indian_kanoon" className="w-full">
               <TabsList className="grid w-full grid-cols-4 bg-gradient-to-r from-primary/10 to-secondary/10 p-2 rounded-xl shadow-lg h-16">
-                
+                <TabsTrigger
+                  value="indian_kanoon"
+                  className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-white h-12 rounded-lg font-semibold indian-hover"
+                >
+                  <Scale className="h-5 w-5" />
+                  <span className="sanskrit-style">⚖️ Indian Kanoon</span>
+                </TabsTrigger>
                 <TabsTrigger
                   value="supreme_court"
                   className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-secondary data-[state=active]:to-secondary/80 data-[state=active]:text-white h-12 rounded-lg font-semibold indian-hover"
@@ -631,13 +650,6 @@ export default function IndianLegalSearchApp() {
                 >
                   <Building className="h-5 w-5" />
                   <span className="sanskrit-style">🏛️ eCourts</span>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="indian_kanoon"
-                  className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-white h-12 rounded-lg font-semibold indian-hover"
-                >
-                  <Scale className="h-5 w-5" />
-                  <span className="sanskrit-style">⚖️ Indian Kanoon</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="legal_news"
