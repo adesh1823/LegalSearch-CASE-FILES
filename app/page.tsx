@@ -70,7 +70,7 @@ export default function IndianLegalSearchApp() {
     year: "",
   })
 
-  const API_BASE_URL = "http://localhost:5000" // Update this to your API URL
+  const API_BASE_URL = "https://aravsaxena884-legal-search.hf.space" // Update this to your API URL
 
   const handleSearch = async () => {
     if (!query.trim()) return
