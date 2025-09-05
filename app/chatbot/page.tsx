@@ -42,14 +42,17 @@ interface UploadResponse {
 
 interface ChatResponse {
   answer: string
+  legal_consultation?: string
+  legal_keywords?: string[]
   sources: string[]
   metadata: {
     collection_name: string
     message_count: number
+    legal_keywords_count?: number
   }
 }
 
-const API_BASE_URL = "https://aravsaxena884-trueRAG.hf.space"
+const API_BASE_URL = "https://adeshjain-adesh-legal-test.hf.space"
 
 const ChatbotPage: React.FC = () => {
   const [pdfUrl, setPdfUrl] = useState<string>("")
@@ -127,7 +130,7 @@ const ChatbotPage: React.FC = () => {
       ])
       setPdfUrl("")
     } catch (err) {
-      const error = err as AxiosError
+      const error = err as AxiosError<any>
       setError(error.response?.data?.detail || "Failed to upload PDF")
     } finally {
       setIsLoading(false)
@@ -157,15 +160,36 @@ const ChatbotPage: React.FC = () => {
       let response
 
       if (collectionName && question.trim()) {
-        // Use existing PDF chat functionality
-        response = await axios.post<ChatResponse>(`${API_BASE_URL}/chat`, {
+        // Use existing PDF chat functionality - Fixed the request payload
+        console.log('Sending request with payload:', {
           question: userMessage.content,
           collection_name: collectionName,
+        });
+        
+        response = await axios.post<ChatResponse>("https://adeshjain-adesh-legal-test.hf.space/chat", {
+          question: userMessage.content, // Based on your backend QuestionRequest model
+          collection_name: collectionName,
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+          }
         })
+
+        let botContent = response.data.answer
+        
+        // Add legal consultation if available
+        if (response.data.legal_consultation) {
+          botContent += `\n\n**Legal Consultation:**\n${response.data.legal_consultation}`
+        }
+        
+        // Add legal keywords if available
+        if (response.data.legal_keywords && response.data.legal_keywords.length > 0) {
+          botContent += `\n\n**Legal Keywords:** ${response.data.legal_keywords.join(', ')}`
+        }
 
         const botMessage: ChatMessage = {
           id: crypto.randomUUID(),
-          content: response.data.answer,
+          content: botContent,
           isUser: false,
           timestamp: new Date().toLocaleTimeString(),
         }
@@ -200,12 +224,14 @@ const ChatbotPage: React.FC = () => {
         setMessages((prev) => [...prev, botMessage])
       }
     } catch (err) {
-      const error = err as AxiosError
-      setError(error.response?.data?.detail || "Failed to get response")
+      console.error("Error details:", err)
+      const error = err as AxiosError<any>
+      const errorDetail = error.response?.data?.detail || error.message || "Failed to get response"
+      setError(errorDetail)
 
       const errorMessage: ChatMessage = {
         id: crypto.randomUUID(),
-        content: "I apologize, but I encountered an error processing your request. Please try again later.",
+        content: `I apologize, but I encountered an error processing your request: ${errorDetail}. Please try again later.`,
         isUser: false,
         timestamp: new Date().toLocaleTimeString(),
       }
