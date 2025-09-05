@@ -107,7 +107,7 @@ export default function ConsultationPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query, user_id: userId }),
       })
-      if (!res.ok) throw new Error(Request failed: ${res.status})
+      if (!res.ok) throw new Error(`Request failed: ${res.status}`)
       const json: ConsultationResponse = await res.json()
       
       const responseContent = json.response || "No response received."
@@ -129,7 +129,7 @@ export default function ConsultationPage() {
       }, 500)
       
     } catch (e: any) {
-      const errorContent = Error: ${e?.message || "Something went wrong"}
+      const errorContent = `Error: ${e?.message || "Something went wrong"}`
       setError(e?.message || "Something went wrong")
       
       // Add error message to chat
@@ -208,8 +208,8 @@ export default function ConsultationPage() {
                 </div>
               ) : (
                 messages.map((message) => (
-                  <div key={message.id} className={flex gap-3 ${message.type === 'user' ? 'justify-end' : 'justify-start'}}>
-                    <div className={flex gap-3 max-w-[80%] ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}}>
+                  <div key={message.id} className={`flex gap-3 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`flex gap-3 max-w-[80%] ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
                       {/* Avatar */}
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                         message.type === 'user' 
