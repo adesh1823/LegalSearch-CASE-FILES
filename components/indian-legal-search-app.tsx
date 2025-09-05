@@ -207,7 +207,7 @@ export default function IndianLegalSearchApp() {
     setConsultError(null)
     setConsultation(null)
     try {
-      const response = await fetch(CONSULT_API, {
+      const response = await fetch(API_BASE_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: payload }),
