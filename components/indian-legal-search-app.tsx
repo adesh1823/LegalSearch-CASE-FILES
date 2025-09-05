@@ -1,17 +1,16 @@
-import IndianLegalSearchApp from "@/components/indian-legal-search-app"
+"use client"
 
-
-export default function Page() {
-  return <IndianLegalSearchApp/
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import Link from "next/link" // add Link import to enable navigation to the separate consultation route
 import {
   Search,
   Scale,
@@ -57,6 +56,12 @@ interface AnalysisResponse {
   error?: string
 }
 
+interface ConsultationResponse {
+  consultation?: string
+  keyword?: string | string[]
+  error?: string
+}
+
 export default function IndianLegalSearchApp() {
   const [query, setQuery] = useState("")
   const [searchType, setSearchType] = useState("all")
@@ -72,6 +77,10 @@ export default function IndianLegalSearchApp() {
     court_type: "",
     year: "",
   })
+  const [consultation, setConsultation] = useState<ConsultationResponse | null>(null)
+  const [consultLoading, setConsultLoading] = useState(false)
+  const [consultError, setConsultError] = useState<string | null>(null)
+  const [caseDetails, setCaseDetails] = useState("")
 
   const API_BASE_URL = "https://aravsaxena884-legal-search.hf.space" // Update this to your API URL
 
@@ -81,6 +90,8 @@ export default function IndianLegalSearchApp() {
     setLoading(true)
     setResults(null)
     setAnalysis(null)
+    setConsultation(null)
+    setConsultError(null)
 
     try {
       const response = await fetch(`${API_BASE_URL}/search`, {
@@ -110,7 +121,7 @@ export default function IndianLegalSearchApp() {
         sources: {
           indian_kanoon: { error: "Search failed. Please check your connection and try again." },
         },
-      })
+      } as any)
     } finally {
       setLoading(false)
     }
@@ -185,6 +196,40 @@ export default function IndianLegalSearchApp() {
         title,
         content: `Failed to load document preview: ${error instanceof Error ? error.message : "Unknown error"}. This document may not be available for preview.`,
       })
+    }
+  }
+
+  const handleConsult = async () => {
+    const payload = (caseDetails && caseDetails.trim()) || (query && query.trim())
+    if (!payload) return
+
+    setConsultLoading(true)
+    setConsultError(null)
+    setConsultation(null)
+    try {
+      const response = await fetch(CONSULT_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: payload }),
+      })
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      const data = await response.json()
+
+      // Normalize potential variations
+      const rawConsultation = data?.consultation ?? data?.Consultation ?? ""
+      const rawKeyword = data?.keyword ?? data?.keywords ?? []
+
+      setConsultation({
+        consultation: typeof rawConsultation === "string" ? rawConsultation : JSON.stringify(rawConsultation, null, 2),
+        keyword: rawKeyword,
+      })
+    } catch (err) {
+      console.error("Consultation failed:", err)
+      setConsultError("Failed to fetch consultation. Please try again.")
+    } finally {
+      setConsultLoading(false)
     }
   }
 
@@ -439,13 +484,20 @@ export default function IndianLegalSearchApp() {
               </p>
             </div>
             <div className="flex flex-col gap-3">
-              <a href="/chatbot" className="block">
+              <Link href="/consultation" className="block">
+                <Button className="bg-gradient-to-r from-orange-500 to-green-600 hover:from-orange-600 hover:to-green-700 text-white shadow-2xl px-6 py-4 h-auto text-lg font-bold indian-hover pulse-saffron">
+                  <Sparkles className="h-6 w-6 mr-3" />
+                  <span className="sanskrit-style">🗣️ Case Consultation • परामर्श</span>
+                </Button>
+              </Link>
+              {/* existing chatbot and voice buttons */}
+              <Link href="/chatbot" className="block">
                 <Button className="bg-gradient-to-r from-orange-500 to-green-600 hover:from-orange-600 hover:to-green-700 text-white shadow-2xl px-6 py-4 h-auto text-lg font-bold indian-hover pulse-saffron">
                   <Brain className="h-6 w-6 mr-3" />
                   <span className="sanskrit-style">🤖 AI Chatbot Analysis • चैटबॉट विश्लेषण</span>
                 </Button>
-              </a>
-              <a href="/voicebot" className="block">
+              </Link>
+              <Link href="/voicebot" className="block">
                 <Button className="bg-gradient-to-r from-green-500 to-orange-600 hover:from-green-600 hover:to-orange-700 text-white shadow-2xl px-6 py-4 h-auto text-lg font-bold indian-hover pulse-saffron">
                   <svg className="h-6 w-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -457,7 +509,7 @@ export default function IndianLegalSearchApp() {
                   </svg>
                   <span className="sanskrit-style">🗣️ Voice Assistant • आवाज सहायक</span>
                 </Button>
-              </a>
+              </Link>
               <p className="text-white/80 text-sm text-center max-w-48">
                 Upload documents & get AI-powered legal insights
               </p>
@@ -467,11 +519,10 @@ export default function IndianLegalSearchApp() {
           <div className="space-y-8">
             <div className="flex gap-4">
               <div className="flex-1">
-                <Input
+                <Textarea
                   placeholder="🔍 Enter your legal query • अपनी कानूनी खोज दर्ज करें (e.g., 'contract law', 'property rights', 'criminal procedure')"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && handleSearch()}
                   className="bg-white/95 backdrop-blur-sm text-foreground border-white/40 h-14 text-lg shadow-2xl indian-card"
                 />
               </div>
@@ -536,6 +587,116 @@ export default function IndianLegalSearchApp() {
                 className="w-44 bg-white/90 backdrop-blur-sm text-foreground border-white/40 indian-card h-12"
               />
             </div>
+
+            {/* Hidden inline consultation section */}
+            <Card className="mt-2 border-4 border-primary/30 shadow-2xl bg-gradient-to-br from-primary/5 via-white to-secondary/5 indian-card hidden">
+              <CardHeader className="bg-gradient-to-r from-primary/10 to-secondary/10">
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="bg-gradient-to-br from-primary to-secondary p-3 rounded-full shadow-lg">
+                      <Brain className="h-8 w-8 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-primary sanskrit-style">
+                        🗣️ Tell me about your case • अपने मामले के बारे में बताएं
+                      </h3>
+                      <p className="text-muted-foreground text-lg">
+                        Enter your case details below to get a quick consultation and key keywords.
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={handleConsult}
+                    disabled={consultLoading || !(caseDetails.trim() || query.trim())}
+                    className="bg-white text-primary hover:bg-white/90 shadow-2xl px-6 py-3 h-auto text-lg font-bold indian-hover"
+                  >
+                    {consultLoading ? (
+                      <>
+                        <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                        <span className="sanskrit-style">Fetching consultation...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-5 w-5 mr-2" />
+                        <span className="sanskrit-style">Get Consultation</span>
+                      </>
+                    )}
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="mb-4">
+                  <label htmlFor="case-details" className="sr-only">
+                    Describe your case
+                  </label>
+                  <Textarea
+                    id="case-details"
+                    placeholder="Describe your case (facts, parties involved, dates, orders, relief sought)…"
+                    value={caseDetails}
+                    onChange={(e) => setCaseDetails(e.target.value)}
+                    className="min-h-32"
+                  />
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Tip: If you leave this blank, we’ll use the main search query instead.
+                  </p>
+                </div>
+
+                {consultError && (
+                  <Alert className="mb-4 border-destructive/50 bg-destructive/5 indian-card">
+                    <AlertCircle className="h-5 w-5" />
+                    <AlertDescription className="text-base">{consultError}</AlertDescription>
+                  </Alert>
+                )}
+
+                {consultation && (consultation.consultation || consultation.keyword) && (
+                  <div className="space-y-6">
+                    {consultation.consultation && (
+                      <div className="bg-white rounded-xl p-6 shadow-inner border-4 border-primary/20 indian-card lotus-pattern">
+                        <h4 className="font-bold text-primary text-xl mb-3 sanskrit-style">📋 Consultation</h4>
+                        <div className="prose max-w-none">
+                          <pre className="whitespace-pre-wrap text-base leading-relaxed text-foreground bg-gradient-to-br from-muted/50 to-primary/5 p-4 rounded-lg border-2 border-primary/10 sanskrit-style">
+                            {consultation.consultation}
+                          </pre>
+                        </div>
+                      </div>
+                    )}
+
+                    {"keyword" in consultation && consultation.keyword !== undefined && (
+                      <div className="bg-white rounded-xl p-6 shadow-inner border-4 border-primary/20 indian-card peacock-pattern">
+                        <h4 className="font-bold text-primary text-xl mb-3 sanskrit-style">🔑 Keywords</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {(() => {
+                            const kw = Array.isArray(consultation.keyword)
+                              ? consultation.keyword
+                              : typeof consultation.keyword === "string"
+                                ? consultation.keyword
+                                    .split(/[,\n]/)
+                                    .map((s) => s.trim())
+                                    .filter(Boolean)
+                                : []
+                            return kw.length > 0 ? (
+                              kw.map((k, idx) => (
+                                <Badge key={idx} variant="secondary" className="text-sm">
+                                  {k}
+                                </Badge>
+                              ))
+                            ) : (
+                              <span className="text-muted-foreground">No keywords returned.</span>
+                            )
+                          })()}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {!consultation && !consultLoading && !consultError && (
+                  <p className="text-muted-foreground text-base">
+                    Enter your query above and click “Get Consultation” to see a brief case guidance and keywords.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
       </header>
@@ -559,7 +720,7 @@ export default function IndianLegalSearchApp() {
               </CardHeader>
             </Card>
 
-            <Card className="border-4 border-primary/30 shadow-2xl bg-gradient-to-br from-primary/5 via-white to-secondary/5 indian-card peacock-pattern">
+            <Card className="border-4 border-primary/30 shadow-2xl indian-card peacock-pattern">
               <CardHeader className="bg-gradient-to-r from-primary/10 to-secondary/10">
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
@@ -576,24 +737,27 @@ export default function IndianLegalSearchApp() {
                       </p>
                     </div>
                   </div>
-                  <Button
-                    onClick={handleAnalyze}
-                    disabled={analyzing}
-                    className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white shadow-2xl px-8 py-4 h-auto text-lg font-bold indian-hover pulse-saffron"
-                    size="lg"
-                  >
-                    {analyzing ? (
-                      <>
-                        <Loader2 className="h-6 w-6 animate-spin mr-3" />
-                        <span className="sanskrit-style">विश्लेषण कर रहे हैं... • Analyzing...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Zap className="h-6 w-6 mr-3" />
-                        <span className="sanskrit-style">🚀 Generate AI Analysis • विश्लेषण करें</span>
-                      </>
-                    )}
-                  </Button>
+                  {/* Right side: our new link button above the existing analyze button */}
+                  <div className="flex flex-col items-end gap-2">
+                    <Button
+                      onClick={handleAnalyze}
+                      disabled={analyzing}
+                      className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white shadow-2xl px-8 py-4 h-auto text-lg font-bold indian-hover pulse-saffron"
+                      size="lg"
+                    >
+                      {analyzing ? (
+                        <>
+                          <Loader2 className="h-6 w-6 animate-spin mr-3" />
+                          <span className="sanskrit-style">विश्लेषण कर रहे हैं... • Analyzing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Zap className="h-6 w-6 mr-3" />
+                          <span className="sanskrit-style">🚀 Generate AI Analysis • विश्लेषण करें</span>
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </CardTitle>
               </CardHeader>
               {analysis && (
