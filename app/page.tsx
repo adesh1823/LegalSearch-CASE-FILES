@@ -2,7 +2,9 @@ import IndianLegalSearchApp from "@/components/indian-legal-search-app"
 
 
 export default function Page() {
-  return <IndianLegalSearchApp/
+  return <IndianLegalSearchApp/>
+}
+
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
