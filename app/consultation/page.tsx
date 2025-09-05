@@ -24,6 +24,8 @@ type Message = {
   type: 'user' | 'ai'
   content: string
   timestamp: Date
+  isTyping?: boolean
+  displayedContent?: string
 }
 
 const CONSULTATION_URL = "https://adeshjain-adesh-legal-test.hf.space/legal-consultation"
@@ -51,6 +53,39 @@ export default function ConsultationPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
+  // Typing effect function
+  const simulateTyping = (messageId: string, fullContent: string) => {
+    const words = fullContent.split(' ')
+    let currentWordIndex = 0
+    
+    const typeNextWord = () => {
+      if (currentWordIndex < words.length) {
+        const wordsToShow = words.slice(0, currentWordIndex + 1).join(' ')
+        
+        setMessages(prev => prev.map(msg => 
+          msg.id === messageId 
+            ? { ...msg, displayedContent: wordsToShow }
+            : msg
+        ))
+        
+        currentWordIndex++
+        
+        // Vary the typing speed slightly for more natural feel
+        const delay = Math.random() * 100 + 50 // 50-150ms between words
+        setTimeout(typeNextWord, delay)
+      } else {
+        // Typing complete
+        setMessages(prev => prev.map(msg => 
+          msg.id === messageId 
+            ? { ...msg, isTyping: false, displayedContent: fullContent }
+            : msg
+        ))
+      }
+    }
+    
+    typeNextWord()
+  }
+
   async function handleConsult() {
     if (!query.trim()) return
     
@@ -72,28 +107,46 @@ export default function ConsultationPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query, user_id: userId }),
       })
-      if (!res.ok) throw new Error(`Request failed: ${res.status}`)
+      if (!res.ok) throw new Error(Request failed: ${res.status})
       const json: ConsultationResponse = await res.json()
       
-      // Add AI response to chat
+      const responseContent = json.response || "No response received."
+      
+      // Add AI response to chat with typing state
       const aiMessage: Message = {
         id: uuidv4(),
         type: 'ai',
-        content: json.response || "No response received.",
-        timestamp: new Date()
+        content: responseContent,
+        timestamp: new Date(),
+        isTyping: true,
+        displayedContent: ""
       }
       setMessages(prev => [...prev, aiMessage])
       
+      // Start typing effect after a brief delay
+      setTimeout(() => {
+        simulateTyping(aiMessage.id, responseContent)
+      }, 500)
+      
     } catch (e: any) {
+      const errorContent = Error: ${e?.message || "Something went wrong"}
       setError(e?.message || "Something went wrong")
+      
       // Add error message to chat
       const errorMessage: Message = {
         id: uuidv4(),
         type: 'ai',
-        content: `Error: ${e?.message || "Something went wrong"}`,
-        timestamp: new Date()
+        content: errorContent,
+        timestamp: new Date(),
+        isTyping: true,
+        displayedContent: ""
       }
       setMessages(prev => [...prev, errorMessage])
+      
+      // Start typing effect for error message
+      setTimeout(() => {
+        simulateTyping(errorMessage.id, errorContent)
+      }, 200)
     } finally {
       setLoading(false)
       setQuery("") // Clear input after sending
@@ -155,8 +208,8 @@ export default function ConsultationPage() {
                 </div>
               ) : (
                 messages.map((message) => (
-                  <div key={message.id} className={`flex gap-3 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`flex gap-3 max-w-[80%] ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                  <div key={message.id} className={flex gap-3 ${message.type === 'user' ? 'justify-end' : 'justify-start'}}>
+                    <div className={flex gap-3 max-w-[80%] ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}}>
                       {/* Avatar */}
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                         message.type === 'user' 
@@ -167,16 +220,29 @@ export default function ConsultationPage() {
                       </div>
                       
                       {/* Message Content */}
-                      <div className={`rounded-lg p-3 ${
+                      <div className={`rounded-lg p-3 relative ${
                         message.type === 'user' 
                           ? 'bg-primary text-white' 
                           : 'bg-muted border border-border'
                       }`}>
                         {message.type === 'ai' ? (
-                          <div
-                            className="prose prose-sm max-w-none text-foreground leading-relaxed [&>*]:text-foreground [&>h1]:text-foreground [&>h2]:text-foreground [&>h3]:text-foreground [&>h4]:text-foreground [&>h5]:text-foreground [&>h6]:text-foreground [&>p]:text-foreground [&>ul]:text-foreground [&>ol]:text-foreground [&>li]:text-foreground [&>strong]:text-foreground [&>em]:text-foreground [&>code]:bg-background [&>code]:text-foreground [&>pre]:bg-background [&>pre]:text-foreground"
-                            dangerouslySetInnerHTML={renderMarkdown(message.content)}
-                          />
+                          <div className="flex flex-col">
+                            <div
+                              className="prose prose-sm max-w-none text-foreground leading-relaxed [&>*]:text-foreground [&>h1]:text-foreground [&>h2]:text-foreground [&>h3]:text-foreground [&>h4]:text-foreground [&>h5]:text-foreground [&>h6]:text-foreground [&>p]:text-foreground [&>ul]:text-foreground [&>ol]:text-foreground [&>li]:text-foreground [&>strong]:text-foreground [&>em]:text-foreground [&>code]:bg-background [&>code]:text-foreground [&>pre]:bg-background [&>pre]:text-foreground"
+                              dangerouslySetInnerHTML={renderMarkdown(message.displayedContent || "")}
+                            />
+                            {/* Typing indicator */}
+                            {message.isTyping && (
+                              <div className="flex items-center gap-1 mt-2">
+                                <div className="flex space-x-1">
+                                  <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                                  <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                                  <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
+                                </div>
+                                <span className="text-xs text-muted-foreground ml-2">AI is typing...</span>
+                              </div>
+                            )}
+                          </div>
                         ) : (
                           <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
                         )}
@@ -200,7 +266,7 @@ export default function ConsultationPage() {
                   <div className="bg-muted border border-border rounded-lg p-3">
                     <div className="flex items-center gap-2">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      <span className="text-sm text-muted-foreground">AI is thinking...</span>
+                      <span className="text-sm text-muted-foreground">Processing your request...</span>
                     </div>
                   </div>
                 </div>
