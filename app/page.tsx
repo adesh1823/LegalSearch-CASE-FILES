@@ -1,3 +1,6 @@
+
+
+
 import IndianLegalSearchApp from "@/components/indian-legal-search-app"
 
 
