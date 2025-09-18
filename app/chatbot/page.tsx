@@ -179,7 +179,7 @@ const ChatbotPage: React.FC = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            message: `You are an expert Indian legal analyst. ${userMessage.content}`,
+            message: `You are an expert Indian document analyst. ${userMessage.content}`,
             model: "llama-3.1-70b-versatile",
           }),
         })
@@ -277,7 +277,7 @@ const ChatbotPage: React.FC = () => {
                   <div className="bg-primary/20 p-2 rounded-full">
                     <MessageCircle className="h-6 w-6" />
                   </div>
-                  <span className="sanskrit-style">📄 PDF Legal Assistant • PDF कानूनी सहायक</span>
+                  <span className="sanskrit-style">📄 PDF Document Assistant • PDF सहायक</span>
                 </CardTitle>
                 <CardDescription className="text-lg">
                   Upload PDF documents via URL and chat with your documents using AI-powered analysis
@@ -332,7 +332,7 @@ const ChatbotPage: React.FC = () => {
                       <h3 className="text-2xl font-bold mb-4 text-primary sanskrit-style">🙏 Welcome to PDF Chatbot</h3>
                       <p className="text-muted-foreground mb-6 max-w-2xl mx-auto text-lg">
                         Upload a PDF document using its URL and start chatting with your document. Ask questions, get
-                        summaries, and extract insights from your legal documents.
+                        summaries, and extract insights from your documents.
                       </p>
                       <div className="flex flex-wrap justify-center gap-2">
                         <Badge variant="outline" className="text-sm">
@@ -417,7 +417,7 @@ const ChatbotPage: React.FC = () => {
                     value={question}
                     onChange={(e) => setQuestion(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    placeholder="Ask a question about the uploaded PDF or general legal queries..."
+                    placeholder="Ask a question about the uploaded PDF or general document queries..."
                     className="flex-1 p-3 border-2 border-primary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary indian-card"
                   />
                   <Button
@@ -467,15 +467,15 @@ const ChatbotPage: React.FC = () => {
                   <div className="flex items-start gap-3">
                     <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
                     <div>
-                      <p className="font-medium">Legal Analysis</p>
-                      <p className="text-sm text-muted-foreground">AI-powered legal document insights</p>
+                      <p className="font-medium">Document Analysis</p>
+                      <p className="text-sm text-muted-foreground">AI-powered document analysis</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
                     <div>
                       <p className="font-medium">Multi-language Support</p>
-                      <p className="text-sm text-muted-foreground">English and Hindi legal terminology</p>
+                      <p className="text-sm text-muted-foreground">English and Hindi terminology support</p>
                     </div>
                   </div>
                 </div>
@@ -502,10 +502,10 @@ const ChatbotPage: React.FC = () => {
                   <Button
                     variant="outline"
                     className="w-full justify-start indian-hover bg-transparent"
-                    onClick={() => setQuestion("What are the legal implications mentioned in this document?")}
+                    onClick={() => setQuestion("What are the implications mentioned in this document?")}
                   >
                     <Scale className="h-4 w-4 mr-2" />
-                    Legal Analysis
+                    Analysis
                   </Button>
                   <Button
                     variant="outline"
@@ -532,7 +532,7 @@ const ChatbotPage: React.FC = () => {
               <AlertCircle className="h-4 w-4" />
               <AlertDescription className="text-sm">
                 <strong>💡 Pro Tip:</strong> Upload a PDF first using its URL, then ask specific questions about the
-                content. The AI can analyze legal documents, contracts, and provide detailed insights.
+                content. The AI can analyze documents and provide detailed insights.
               </AlertDescription>
             </Alert>
           </div>
