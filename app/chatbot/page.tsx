@@ -2,6 +2,7 @@
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import axios, { type AxiosError } from "axios"
+import ReactMarkdown from "react-markdown"
 import { Button } from "@/components/ui/button"
 import {
   ArrowLeft,
@@ -65,9 +66,14 @@ const ChatbotPage: React.FC = () => {
 
   useEffect(() => {
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
+      const scrollElement = chatContainerRef.current.querySelector("[data-radix-scroll-area-viewport]")
+      if (scrollElement) {
+        scrollElement.scrollTop = scrollElement.scrollHeight
+      } else {
+        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
+      }
     }
-  }, [messages])
+  }, [messages, isLoading])
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault()
@@ -369,7 +375,61 @@ const ChatbotPage: React.FC = () => {
                                 )}
                               </div>
                               <div className="flex-1">
-                                <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                                {message.isUser ? (
+                                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                                ) : (
+                                  <div className="text-sm leading-relaxed prose prose-sm max-w-none dark:prose-invert">
+                                    <ReactMarkdown
+                                      components={{
+                                        h1: ({ children }) => (
+                                          <h1 className="text-lg font-bold mb-2 text-primary">{children}</h1>
+                                        ),
+                                        h2: ({ children }) => (
+                                          <h2 className="text-base font-semibold mb-2 text-primary">{children}</h2>
+                                        ),
+                                        h3: ({ children }) => (
+                                          <h3 className="text-sm font-medium mb-1 text-primary">{children}</h3>
+                                        ),
+                                        p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                                        ul: ({ children }) => (
+                                          <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>
+                                        ),
+                                        ol: ({ children }) => (
+                                          <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol>
+                                        ),
+                                        li: ({ children }) => <li className="text-sm">{children}</li>,
+                                        code: ({ children, className }) => {
+                                          const isInline = !className
+                                          return isInline ? (
+                                            <code className="bg-primary/10 px-1 py-0.5 rounded text-xs font-mono">
+                                              {children}
+                                            </code>
+                                          ) : (
+                                            <code className="block bg-primary/10 p-2 rounded text-xs font-mono whitespace-pre-wrap overflow-x-auto">
+                                              {children}
+                                            </code>
+                                          )
+                                        },
+                                        pre: ({ children }) => (
+                                          <pre className="bg-primary/10 p-2 rounded text-xs font-mono whitespace-pre-wrap overflow-x-auto mb-2">
+                                            {children}
+                                          </pre>
+                                        ),
+                                        blockquote: ({ children }) => (
+                                          <blockquote className="border-l-4 border-primary/30 pl-3 italic mb-2">
+                                            {children}
+                                          </blockquote>
+                                        ),
+                                        strong: ({ children }) => (
+                                          <strong className="font-semibold text-primary">{children}</strong>
+                                        ),
+                                        em: ({ children }) => <em className="italic">{children}</em>,
+                                      }}
+                                    >
+                                      {message.content}
+                                    </ReactMarkdown>
+                                  </div>
+                                )}
                                 {message.files && message.files.length > 0 && (
                                   <div className="mt-3 space-y-2">
                                     {message.files.map((file, index) => (
